@@ -1,0 +1,6 @@
+{
+  "name": "ระบบร้องเรียนชุมชน",
+  "description": "ระบบร้องเรียนและแจ้งเบาะแสประจำหมู่บ้านเพื่อการจัดการปัญหาชุมชนอย่างเป็นระบบ สะดวกรวดเร็ว และโปร่งใสสำหรับทุกคน",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
