@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Complaint, CategoryType, CATEGORIES, STATUSES } from '../types';
 import { 
-  Lock, Award, TrendingUp, TrendingDown, CheckCircle, ChevronRight, Printer, LogOut, FileText, AlertCircle, Info, PieChart, Users, Star 
+  Lock, Award, TrendingUp, TrendingDown, CheckCircle, ChevronRight, Printer, LogOut, FileText, AlertCircle, Info, PieChart, Users, Star, FileDown 
 } from 'lucide-react';
 
 interface HeadmanSummaryProps {
@@ -176,10 +176,10 @@ export default function HeadmanSummary({ complaints, toast }: HeadmanSummaryProp
           <button
             onClick={startPrint}
             id="printSummaryBtn"
-            className="px-4.5 py-2.5 bg-[#0F766E] hover:bg-teal-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+            className="px-4.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 shrink-0 hover:scale-[1.01] active:scale-[0.99]"
             style={{ minHeight: '44px' }}
           >
-            <Printer className="w-4 h-4" /> พิมพ์สรุปรายงาน (Print)
+            <FileDown className="w-4 h-4" /> ส่งออกรายงานสรุป (PDF)
           </button>
           <button
             onClick={logoutHeadman}

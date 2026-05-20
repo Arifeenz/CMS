@@ -16,19 +16,137 @@
 
 /* Print optimizations for executive headman export reports */
 @media print {
-  body {
-    background-color: white !important;
-    color: black !important;
-    font-size: 11pt !important;
-  }
-  
-  .no-print {
+  /* Hide digital navigation, web headers, alerts, toggles, buttons */
+  header, nav, #bottomNavBar, #toastContainer_App, .no-print, #themeToggleBtn_App, button, .lucide {
     display: none !important;
   }
 
+  /* Universal page configuration (Standard A4 with good margins) */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 20mm 15mm;
+  }
+
+  /* Reset layout colors and background to clean paper-white and high-contrast dark text */
+  html, body {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    font-size: 10.5pt !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Adjust page elements inside the printable report */
   .printable-area {
+    margin: 0 !important;
+    padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  /* Structure grid blocks into stacked blocks for standard paper formatting */
+  .printable-area .grid,
+  .printable-area .grid-cols-1,
+  .printable-area .grid-cols-2,
+  .printable-area .grid-cols-3,
+  .printable-area .grid-cols-12 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+    width: 100% !important;
+  }
+
+  /* Align small KPIs horizontally if space permits to keep them elegant */
+  .printable-area .grid.grid-cols-1.md\:grid-cols-3 {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 1rem !important;
+  }
+
+  .printable-area .grid.grid-cols-1.md\:grid-cols-3 > * {
+    flex: 1 1 33.33% !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Prevent elements from being sliced mid-sentence across multiple pages */
+  .printable-area > *,
+  .printable-area .rounded-2xl,
+  .printable-area .bg-white,
+  .printable-area .bg-slate-50,
+  .printable-area .p-5,
+  .printable-area .p-4 {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Style headings to mimic a clean administrative Thai report layout */
+  .printable-area h3 {
+    font-size: 16.5pt !important;
+    font-weight: 800 !important;
+    color: #0f766e !important;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .printable-area h4 {
+    font-size: 12pt !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Text color corrections for deep paper contrast */
+  .printable-area p, 
+  .printable-area span, 
+  .printable-area div, 
+  .printable-area h5 {
+    color: #1e293b !important;
+  }
+
+  /* Accent color overrides to retain beautiful indicators */
+  .printable-area .text-emerald-600, 
+  .printable-area .text-emerald-700 {
+    color: #059669 !important;
+    font-weight: bold !important;
+  }
+  
+  .printable-area .text-rose-600 {
+    color: #dc2626 !important;
+    font-weight: bold !important;
+  }
+
+  .printable-area .text-[#D97706] {
+    color: #d97706 !important;
+    font-weight: bold !important;
+  }
+
+  /* Correct backgrounds for summary cells */
+  .printable-area .bg-slate-50,
+  .printable-area .dark\:bg-slate-900,
+  .printable-area .dark\:bg-slate-950 {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* Highlight demographic cards slightly */
+  .printable-area .from-teal-50 {
+    background-color: #f0fdfa !important;
+    border: 1px solid #b2f5ea !important;
+  }
+
+  /* Retain circle SVG chart visibility and fidelity */
+  .printable-area circle {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 }
 
