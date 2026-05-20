@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Complaint, CategoryType, CATEGORIES, SUSPICIOUS_WORDS } from '../types';
-import { Milestone, Lightbulb, Droplet, Trash2, ShieldAlert, HelpCircle, Image as ImageIcon, CheckCircle, Copy, AlertTriangle } from 'lucide-react';
+import { Milestone, Lightbulb, Droplet, Trash2, ShieldAlert, HelpCircle, Image as ImageIcon, Camera, CheckCircle, Copy, AlertTriangle, Search } from 'lucide-react';
 
 interface VillagerFormProps {
   onAddComplaint: (newComplaint: Complaint) => void;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  onTrackComplaint?: (code: string) => void;
 }
 
 const MOCK_PHOTOS = [
@@ -14,7 +15,7 @@ const MOCK_PHOTOS = [
   { label: 'น้ำประปาเหลืองขุ่น', url: 'https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&q=80&w=600' },
 ];
 
-export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProps) {
+export default function VillagerForm({ onAddComplaint, toast, onTrackComplaint }: VillagerFormProps) {
   // Form stats
   const [category, setCategory] = useState<CategoryType>('road');
   const [title, setTitle] = useState('');
@@ -235,6 +236,17 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
           >
             ส่งเรื่องร้องเรียนเพิ่มเติม
           </button>
+          {onTrackComplaint && (
+            <button
+              onClick={() => onTrackComplaint(submittedCode)}
+              id="goToTrackBtn"
+              className="px-6 py-3 bg-teal-50 hover:bg-teal-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-[#0F766E] dark:text-teal-400 border border-[#0F766E]/20 font-extrabold text-sm rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5"
+              style={{ minHeight: '48px' }}
+            >
+              <Search className="w-4 h-4" />
+              ติดตามสถานะของเรื่องนี้เลย
+            </button>
+          )}
         </div>
       </div>
     );
@@ -256,54 +268,74 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
         
         {/* PHOTO COMPONENT */}
         <div>
-          <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+          <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5 justify-center sm:justify-start">
             <span className="text-rose-500 text-lg">*</span> 1. รูปถ่ายหลักฐานจุดที่เกิดปัญหา (บังคับอัปโหลด):
           </label>
           
-          <div
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-6 transition-all relative flex flex-col items-center justify-center text-center cursor-pointer ${
-              dragActive ? 'border-amber-500 bg-amber-50/20' : 'border-slate-300 dark:border-slate-700 hover:border-teal-600 bg-slate-50 dark:bg-slate-950/50'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            style={{ minHeight: '160px' }}
-            id="dragDropZone"
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileInput}
-              accept="image/*"
-            />
-            {photo ? (
-              <div className="w-full relative group" onClick={(e) => e.stopPropagation()}>
-                <img
-                  src={photo}
-                  alt="Preview"
-                  referrerPolicy="no-referrer"
-                  className="max-h-64 object-cover rounded-lg mx-auto border border-slate-200 dark:border-slate-800"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-lg transition-all">
-                  <span className="text-white text-xs font-bold bg-[#D97706] px-3 py-1.5 rounded-lg" onClick={() => fileInputRef.current?.click()}>
-                    เปลี่ยนรูปภาพ
-                  </span>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300 w-full max-w-md ${
+                photo 
+                  ? '' 
+                  : dragActive 
+                    ? 'scale-105' 
+                    : ''
+              }`}
+              id="dragDropZone"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileInput}
+                accept="image/*"
+              />
+              {photo ? (
+                <div className="w-full relative group" onClick={(e) => e.stopPropagation()}>
+                  <img
+                    src={photo}
+                    alt="Preview"
+                    referrerPolicy="no-referrer"
+                    className="max-h-72 w-full object-cover rounded-2xl mx-auto border-2 border-slate-200 dark:border-slate-850 shadow-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/75 hover:bg-black text-white text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 transition-all shadow-md"
+                  >
+                    <Camera className="w-4 h-4 text-amber-300" />
+                    <span>เปลี่ยนรูปภาพหลักฐาน</span>
+                  </button>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-2 pointer-events-none">
-                <div className="w-12 h-12 bg-white dark:bg-slate-800 shadow-md rounded-full flex items-center justify-center mx-auto text-slate-400 dark:text-slate-300">
-                  <ImageIcon className="w-6 h-6 text-[#0F766E]" />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center">
+                  {/* Pulsing Outer Ring */}
+                  <div className="relative group mb-4">
+                    <div className="absolute inset-0 bg-teal-500/10 dark:bg-teal-400/15 rounded-full blur-xl group-hover:blur-2xl transition-all duration-300 animate-pulse" />
+                    <div className="relative w-32 h-32 rounded-full bg-gradient-to-tr from-teal-50 to-teal-100/40 dark:from-slate-800 dark:to-slate-900 border-2 border-dashed border-[#0F766E] dark:border-teal-500/50 flex flex-col items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0F766E] to-teal-700 dark:from-teal-600 dark:to-teal-800 shadow-md flex items-center justify-center text-white mb-1">
+                        <Camera className="w-8 h-8" />
+                      </div>
+                      <span className="text-[10px] font-extrabold text-[#0F766E] dark:text-teal-400">กดเพื่อถ่ายรูป</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                      หรือลากไฟล์ภาพมาที่นี่เพื่อแนบ
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      รองรับ JPEG, PNG (ไม่เกิน 5MB)
+                    </p>
+                  </div>
                 </div>
-                <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  <span className="font-bold text-[#0F766E] dark:text-teal-400 hover:underline">คลิกเพื่อเลือกไฟล์</span> หรือ ลากไฟล์รูปเหตุการณ์มาวางตรงนี้
-                </div>
-                <p className="text-[11px] text-slate-400">รองรับไฟล์รูป JPEG, PNG ขนาดไม่เกิน 5MB</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Quick choices for testing */}
@@ -374,7 +406,7 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="ตัวอย่าง: กิ่งไม้แห้งขวางเลนจราจรปากทางเข้าซอย 4 ท้ายหมู่บ้าน"
-            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-base focus:ring-2 focus:ring-teal-500 focus:outline-none"
             required
           />
         </div>
@@ -396,7 +428,7 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="โปรดบรรยายอย่างละเอียด เช่น ปัญหานี้สร้างความเดือดร้อนแก่สัญจรคนแก่ช่วงค่ำอย่างไร เสี่ยงโจรขโมย หรือทำให้รถล้มบาดเจ็บกี่รายแล้ว..."
-            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none leading-relaxed"
+            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-base focus:ring-2 focus:ring-teal-500 focus:outline-none leading-relaxed"
             required
           />
         </div>
@@ -412,7 +444,7 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="เช่น หน้าบ้านเลขที่ 15/4 ซอยคุณตาแย้ม หรือ ช่วงโค้งขวาห่างจากคลองส่งน้ำ 50 เมตร"
-            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-base focus:ring-2 focus:ring-teal-500 focus:outline-none"
             required
           />
         </div>
@@ -446,7 +478,7 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
                   value={informerName}
                   onChange={(e) => setInformerName(e.target.value)}
                   placeholder="เช่น นายศักดิ์ดา รักดี"
-                  className="w-full px-3.5 py-2.5 border border-slate-305 dark:border-slate-700 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-slate-305 dark:border-slate-700 rounded-lg text-base bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -459,7 +491,7 @@ export default function VillagerForm({ onAddComplaint, toast }: VillagerFormProp
                   value={informerPhone}
                   onChange={(e) => setInformerPhone(e.target.value)}
                   placeholder="เช่น 089-123-4567"
-                  className="w-full px-3.5 py-2.5 border border-slate-305 dark:border-slate-700 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-slate-305 dark:border-slate-700 rounded-lg text-base bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
               </div>
             </div>

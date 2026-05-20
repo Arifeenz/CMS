@@ -3,9 +3,10 @@ import { Complaint, INITIAL_COMPLAINTS, StatusType } from './types';
 import VillagerForm from './components/VillagerForm';
 import AdminPanel from './components/AdminPanel';
 import HeadmanSummary from './components/HeadmanSummary';
+import ComplaintTracker from './components/ComplaintTracker';
 
 import { 
-  FileText, LayoutDashboard, Award, Sun, Moon, Megaphone, PhoneCall, HeartPulse, CheckSquare, Bell
+  FileText, LayoutDashboard, Award, Sun, Moon, Megaphone, PhoneCall, HeartPulse, CheckSquare, Bell, Search
 } from 'lucide-react';
 
 interface ToastMessage {
@@ -51,8 +52,9 @@ export default function App() {
     localStorage.setItem('village_complaints', JSON.stringify(complaints));
   }, [complaints]);
 
-  // 3. Navigation State (Bottom Tab bar with 3 tabs)
-  const [activeTab, setActiveTab] = useState<'villager' | 'admin' | 'headman'>('villager');
+  // 3. Navigation State (Bottom Tab bar with 4 tabs)
+  const [activeTab, setActiveTab] = useState<'villager' | 'track' | 'admin' | 'headman'>('villager');
+  const [trackSearchCode, setTrackSearchCode] = useState('');
 
   // 4. Toast Notification Manager
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -178,7 +180,25 @@ export default function App() {
               </div>
             </div>
 
-            <VillagerForm onAddComplaint={handleAddComplaint} toast={showToastHandler} />
+            <VillagerForm 
+              onAddComplaint={handleAddComplaint} 
+              toast={showToastHandler} 
+              onTrackComplaint={(code) => {
+                setTrackSearchCode(code);
+                setActiveTab('track');
+              }}
+            />
+          </div>
+        )}
+
+        {activeTab === 'track' && (
+          <div className="animate-fade-in" id="trackViewBlock">
+            <ComplaintTracker 
+              complaints={complaints}
+              initialSearchCode={trackSearchCode}
+              onNavigateToForm={() => setActiveTab('villager')}
+              toast={showToastHandler}
+            />
           </div>
         )}
 
@@ -202,9 +222,9 @@ export default function App() {
 
       </main>
 
-      {/* 4. THE 3-VIEW BOTTOM NAVIGATION TAB BAR */}
+      {/* 4. THE 4-VIEW BOTTOM NAVIGATION TAB BAR */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2.5 px-4 shadow-xl z-40 no-print" id="bottomNavBar">
-        <div className="max-w-md mx-auto flex justify-around items-center">
+        <div className="max-w-lg mx-auto flex justify-around items-center">
           
           {/* TAB 1: ร้องเรียน (Form Icon) */}
           <button
@@ -215,13 +235,34 @@ export default function App() {
                 ? 'text-[#0F766E] dark:text-teal-400 scale-105 font-black'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-650'
             }`}
-            style={{ minWidth: '72px', minHeight: '48px' }}
+            style={{ minWidth: '64px', minHeight: '48px' }}
           >
             <FileText className={`w-5.5 h-5.5 mb-1 ${activeTab === 'villager' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             <span className="text-[10px] font-extrabold tracking-tight">ร้องเรียน</span>
           </button>
 
-          {/* TAB 2: แดชบอร์ด (Chart/Admin Icon) */}
+          {/* TAB 2: ติดตามสถานะ (Search Icon) */}
+          <button
+            onClick={() => {
+              // Reset initial search text if navigate manually to keep it fresh
+              if (activeTab !== 'track') {
+                setTrackSearchCode('');
+              }
+              setActiveTab('track');
+            }}
+            id="tab_track_btn"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'track'
+                ? 'text-[#0F766E] dark:text-teal-400 scale-105 font-black'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-650'
+            }`}
+            style={{ minWidth: '64px', minHeight: '48px' }}
+          >
+            <Search className={`w-5.5 h-5.5 mb-1 ${activeTab === 'track' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            <span className="text-[10px] font-extrabold tracking-tight">ติดตามสถานะ</span>
+          </button>
+
+          {/* TAB 3: แดชบอร์ด (Chart/Admin Icon) */}
           <button
             onClick={() => setActiveTab('admin')}
             id="tab_admin_btn"
@@ -230,13 +271,13 @@ export default function App() {
                 ? 'text-[#0F766E] dark:text-teal-400 scale-105 font-black'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-650'
             }`}
-            style={{ minWidth: '72px', minHeight: '48px' }}
+            style={{ minWidth: '64px', minHeight: '48px' }}
           >
             <LayoutDashboard className={`w-5.5 h-5.5 mb-1 ${activeTab === 'admin' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             <span className="text-[10px] font-extrabold tracking-tight">แดชบอร์ด-กรรมการ</span>
           </button>
 
-          {/* TAB 3: สรุป (Report/Headman Icon) */}
+          {/* TAB 4: สรุป (Report/Headman Icon) */}
           <button
             onClick={() => setActiveTab('headman')}
             id="tab_headman_btn"
@@ -245,7 +286,7 @@ export default function App() {
                 ? 'text-[#0F766E] dark:text-teal-400 scale-105 font-black'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-650'
             }`}
-            style={{ minWidth: '72px', minHeight: '48px' }}
+            style={{ minWidth: '64px', minHeight: '48px' }}
           >
             <Award className={`w-5.5 h-5.5 mb-1 ${activeTab === 'headman' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             <span className="text-[10px] font-extrabold tracking-tight">สรุป-ผู้ใหญ่บ้าน</span>

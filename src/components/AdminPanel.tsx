@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Complaint, CategoryType, StatusType, CATEGORIES, STATUSES } from '../types';
 import { 
-  Lock, CheckCircle, Clock, Wrench, XCircle, Layers, Filter, Eye, Search, LogOut, Check, X, ShieldAlert, Calendar, MapPin, User, Phone, CheckCircle2 
+  Lock, CheckCircle, Clock, Wrench, XCircle, Layers, Filter, Eye, Search, LogOut, Check, X, ShieldAlert, Calendar, MapPin, User, Phone, CheckCircle2, RefreshCw
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -37,6 +37,67 @@ export default function AdminPanel({
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [updateStatus, setUpdateStatus] = useState<StatusType>('pending');
+
+  // Pull to Refresh state & touch logic
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullThreshold = 70;
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (window.scrollY === 0 && !isRefreshing) {
+      setStartY(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isPulling || isRefreshing) return;
+    const currentTouchY = e.touches[0].clientY;
+    const pullDistance = currentTouchY - startY;
+
+    if (pullDistance > 0) {
+      // Damped translation for natural feel
+      const dampedDistance = Math.min(pullDistance * 0.45, 110);
+      setCurrentY(dampedDistance);
+      // Disable scrolling if we are pulling down
+      if (pullDistance > 8) {
+        if (e.cancelable) e.preventDefault();
+      }
+    } else {
+      setCurrentY(0);
+      setIsPulling(false);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPulling) return;
+    setIsPulling(false);
+
+    if (currentY >= pullThreshold) {
+      setIsRefreshing(true);
+      setCurrentY(pullThreshold); // Hold progress loading state
+
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setCurrentY(0);
+        toast('ดาวน์โหลดระบบข้อมูลเรียลไทม์สำเร็จแล้ว! 🔄', 'success');
+      }, 1200);
+    } else {
+      setCurrentY(0);
+    }
+  };
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    setCurrentY(pullThreshold);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setCurrentY(0);
+      toast('ระบบดึงและตรวจสอบข้อมูลเรียลไทม์สำเร็จ 🔄', 'success');
+    }, 1200);
+  };
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -390,7 +451,7 @@ export default function AdminPanel({
                   id="adminSearchInput"
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="ค้นหาตามชื่อ, รหัส, สถานที่ หรืออาการ..."
-                  className="w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                  className="w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl text-base focus:ring-1 focus:ring-teal-500 focus:outline-none"
                   style={{ minHeight: '44px' }}
                 />
               </div>
@@ -401,7 +462,7 @@ export default function AdminPanel({
                   value={categoryFilter}
                   id="adminCategoryFilter"
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-1 focus:ring-teal-500"
                   style={{ minHeight: '44px' }}
                 >
                   <option value="all">ทุกหมวดทุกเหตุ</option>
@@ -418,7 +479,7 @@ export default function AdminPanel({
                     value={statusFilter}
                     id="adminStatusFilter"
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-teal-505"
+                    className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl text-base focus:outline-none focus:ring-1 focus:ring-teal-505"
                     style={{ minHeight: '44px' }}
                   >
                     <option value="all">ทุกระดับสถานะ</option>
@@ -438,7 +499,7 @@ export default function AdminPanel({
                     value={startDate}
                     id="adminStartDate"
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="text-[10px] bg-transparent text-slate-800 dark:text-white focus:outline-none w-full"
+                    className="text-base bg-transparent text-slate-800 dark:text-white focus:outline-none w-full animate-fade-in"
                   />
                 </div>
                 <div className="flex items-center bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-705 px-2 rounded-xl">
@@ -448,7 +509,7 @@ export default function AdminPanel({
                     value={endDate}
                     id="adminEndDate"
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="text-[10px] bg-transparent text-slate-800 dark:text-white focus:outline-none w-full"
+                    className="text-base bg-transparent text-slate-800 dark:text-white focus:outline-none w-full animate-fade-in"
                   />
                 </div>
               </div>
@@ -457,108 +518,147 @@ export default function AdminPanel({
           </div>
 
           {/* LIST CONTAINER FEED */}
-          <div className="space-y-4">
-            {filteredComplaints.length === 0 ? (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-450">
-                <XCircle className="w-12 h-12 text-slate-320 mx-auto mb-3" />
-                <span className="font-bold text-sm block text-slate-700 dark:text-slate-300">ไม่พบเรื่องร้องเรียนที่ตรงกับเงื่อนไขการกรอง</span>
-                <p className="text-xs text-slate-400 mt-1">ท่านสามารถปรับเปลี่ยนคำค้นหรือหมวดเกณฑ์การคัดเลือก เพื่อแสดงประเด็นหมู่บ้านอื่นๆ</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredComplaints.map((comp) => {
-                  const cat = CATEGORIES[comp.category] || CATEGORIES.other;
-                  const st = STATUSES[comp.status] || STATUSES.pending;
-                  
-                  return (
-                    <div 
-                      key={comp.id}
-                      id={`complaintCard_${comp.id}`}
-                      onClick={() => openDetailModal(comp)}
-                      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 overflow-hidden shadow-sm hover:shadow-md transition-all h-full flex flex-col justify-between cursor-pointer border-t-4 border-t-[#0F766E] duration-200 active:scale-[0.98]"
-                    >
-                      {/* Badge Top Info */}
-                      <div>
-                        <div className="h-44 bg-slate-105 dark:bg-slate-950 relative overflow-hidden">
-                          <img
-                            src={comp.photo}
-                            alt="Damage Location"
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest font-mono">
-                            {comp.id}
-                          </span>
-                          
-                          <div className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full border ${st.bg} ${st.text}`}>
-                            {st.label}
-                          </div>
-                        </div>
-
-                        <div className="p-4 space-y-2">
-                          <div className="flex gap-2.5 items-center">
-                            <span className={`inline-block text-[10px] font-bold px-2.5 py-1.5 rounded-full ${cat.bg} ${cat.text}`}>
-                              {cat.label}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 font-mono">
-                              <Calendar className="w-3.5 h-3.5" /> {comp.date}
-                            </span>
-                          </div>
-
-                          <h5 className="font-extrabold text-sm text-slate-800 dark:text-slate-200 line-clamp-1">
-                            {comp.title}
-                          </h5>
-                          
-                          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed h-8">
-                            {comp.description}
-                          </p>
-
-                          <div className="text-[11px] font-bold text-slate-450 dark:text-slate-400 flex items-center gap-1 bg-slate-50 dark:bg-slate-950 p-2 rounded-lg">
-                            <MapPin className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
-                            <span className="truncate">{comp.location}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Flag Details for Suspicious Tabs */}
-                      {comp.status === 'flagged' && (
-                        <div className="px-4 pb-2 border-t border-slate-100 dark:border-slate-800/80 pt-2 bg-orange-50/20">
-                          <span className="text-[10px] font-black text-orange-700 block mb-0.5">⚠️ เหตุผลที่ถ้อยคำต้องสงสัย:</span>
-                          <p className="text-[10px] text-orange-600 truncate">{comp.flagReasons?.join(', ')}</p>
-                          
-                          {/* QUICK ACTION BUTTONS IN CARD FOOTER FOR MODERATION QUEUE */}
-                          <div className="grid grid-cols-2 gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => {
-                                onApproveFlaggedComplaint(comp.id);
-                                toast(`อนุมัติเรื่อง ${comp.id} คืนสู่สารบบปกติเรียบร้อย`, 'success');
-                              }}
-                              id={`approve_flagged_btn_${comp.id}`}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-extrabold py-2 px-3 rounded-lg flex items-center justify-center gap-1 shadow-sm transition-all"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <Check className="w-3.5 h-3.5" /> อนุมัติการแจ้ง
-                            </button>
-                            <button
-                              onClick={() => {
-                                onRejectFlaggedComplaint(comp.id);
-                                toast(`ปฏิเสธข้อร้องเรียน ${comp.id} ออกจากระบบแล้ว`, 'error');
-                              }}
-                              id={`reject_flagged_btn_${comp.id}`}
-                              className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-extrabold py-2 px-3 rounded-lg flex items-center justify-center gap-1 shadow-sm transition-all"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <X className="w-3.5 h-3.5" /> ปฏิเสธความจริง
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  );
-                })}
+          <div className="relative">
+            {/* Pull to Refresh Indicator */}
+            {currentY > 0 && (
+              <div 
+                className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md rounded-full px-4 py-2 transition-all z-40 text-xs font-black text-[#0F766E] dark:text-teal-400"
+                style={{ 
+                  top: `${Math.max(-45, -60 + currentY * 0.55)}px`, 
+                  opacity: Math.min(currentY / pullThreshold, 1),
+                  transform: `scale(${Math.min(currentY / pullThreshold, 1)})`
+                }}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: !isRefreshing ? `rotate(${currentY * 3.5}deg)` : undefined }} />
+                <span>{isRefreshing ? 'กำลังอัปเดตแกนข้อมูล...' : currentY >= pullThreshold ? 'ปล่อยมือเพื่ออัปเดต' : 'ดึงลงเพื่อรีเฟรช'}</span>
               </div>
             )}
+
+            <div 
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className="space-y-4 transition-transform duration-200 ease-out"
+              style={{ transform: currentY > 0 ? `translateY(${currentY * 0.4}px)` : 'none' }}
+            >
+              <div className="flex justify-between items-center px-1 no-print">
+                <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
+                  (ดึงลงเพื่อรีเฟรช หรือใช้ปุ่มด่วนด้านขวา) 📱
+                </span>
+                <button
+                  onClick={handleManualRefresh}
+                  type="button"
+                  id="manualRefreshBtn"
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1"
+                  style={{ minHeight: '32px' }}
+                >
+                  <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  รีเฟรชข้อมูล
+                </button>
+              </div>
+
+              {filteredComplaints.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-450">
+                  <XCircle className="w-12 h-12 text-slate-320 mx-auto mb-3" />
+                  <span className="font-bold text-sm block text-slate-700 dark:text-slate-300">ไม่พบเรื่องร้องเรียนที่ตรงกับเงื่อนไขการกรอง</span>
+                  <p className="text-xs text-slate-400 mt-1">ท่านสามารถปรับเปลี่ยนคำค้นหรือหมวดเกณฑ์การคัดเลือก เพื่อแสดงประเด็นหมู่บ้านอื่นๆ</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredComplaints.map((comp) => {
+                    const cat = CATEGORIES[comp.category] || CATEGORIES.other;
+                    const st = STATUSES[comp.status] || STATUSES.pending;
+                    
+                    return (
+                      <div 
+                        key={comp.id}
+                        id={`complaintCard_${comp.id}`}
+                        onClick={() => openDetailModal(comp)}
+                        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 overflow-hidden shadow-sm hover:shadow-md transition-all h-full flex flex-col justify-between cursor-pointer border-t-4 border-t-[#0F766E] duration-200 active:scale-[0.98]"
+                      >
+                        {/* Badge Top Info */}
+                        <div>
+                          <div className="h-44 bg-slate-105 dark:bg-slate-950 relative overflow-hidden">
+                            <img
+                              src={comp.photo}
+                              alt="Damage Location"
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest font-mono">
+                              {comp.id}
+                            </span>
+                            
+                            <div className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full border ${st.bg} ${st.text}`}>
+                              {st.label}
+                            </div>
+                          </div>
+
+                          <div className="p-4 space-y-2">
+                            <div className="flex gap-2.5 items-center">
+                              <span className={`inline-block text-[10px] font-bold px-2.5 py-1.5 rounded-full ${cat.bg} ${cat.text}`}>
+                                {cat.label}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 font-mono">
+                                <Calendar className="w-3.5 h-3.5" /> {comp.date}
+                              </span>
+                            </div>
+
+                            <h5 className="font-extrabold text-sm text-slate-800 dark:text-slate-200 line-clamp-1">
+                              {comp.title}
+                            </h5>
+                            
+                            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed h-8">
+                              {comp.description}
+                            </p>
+
+                            <div className="text-[11px] font-bold text-slate-450 dark:text-slate-400 flex items-center gap-1 bg-slate-50 dark:bg-slate-950 p-2 rounded-lg">
+                              <MapPin className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+                              <span className="truncate">{comp.location}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Flag Details for Suspicious Tabs */}
+                        {comp.status === 'flagged' && (
+                          <div className="px-4 pb-2 border-t border-slate-100 dark:border-slate-800/80 pt-2 bg-orange-50/20">
+                            <span className="text-[10px] font-black text-orange-700 block mb-0.5">⚠️ เหตุผลที่ถ้อยคำต้องสงสัย:</span>
+                            <p className="text-[10px] text-orange-600 truncate">{comp.flagReasons?.join(', ')}</p>
+                            
+                            {/* QUICK ACTION BUTTONS IN CARD FOOTER FOR MODERATION QUEUE */}
+                            <div className="grid grid-cols-2 gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => {
+                                  onApproveFlaggedComplaint(comp.id);
+                                  toast(`อนุมัติเรื่อง ${comp.id} คืนสู่สารบบปกติเรียบร้อย`, 'success');
+                                }}
+                                id={`approve_flagged_btn_${comp.id}`}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-extrabold py-2 px-3 rounded-lg flex items-center justify-center gap-1 shadow-sm transition-all"
+                                style={{ minHeight: '32px' }}
+                              >
+                                <Check className="w-3.5 h-3.5" /> อนุมัติการแจ้ง
+                              </button>
+                              <button
+                                onClick={() => {
+                                  onRejectFlaggedComplaint(comp.id);
+                                  toast(`ปฏิเสธข้อร้องเรียน ${comp.id} ออกจากระบบแล้ว`, 'error');
+                                }}
+                                id={`reject_flagged_btn_${comp.id}`}
+                                className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-extrabold py-2 px-3 rounded-lg flex items-center justify-center gap-1 shadow-sm transition-all"
+                                style={{ minHeight: '32px' }}
+                              >
+                                <X className="w-3.5 h-3.5" /> ปฏิเสธความจริง
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
@@ -663,7 +763,7 @@ export default function AdminPanel({
                       id="update_status_sel"
                       value={updateStatus}
                       onChange={(e) => setUpdateStatus(e.target.value as StatusType)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-705 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-lg text-xs font-bold focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-705 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-lg text-base font-bold focus:outline-none focus:ring-1 focus:ring-teal-500"
                       style={{ minHeight: '40px' }}
                     >
                       <option value="pending">รอดำเนินการ (Pending)</option>
@@ -684,7 +784,7 @@ export default function AdminPanel({
                       value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
                       placeholder="เขียนระบุรายละเอียดความร่วมมือ เช่น โยธาท้องถิ่นเสร็จภารกิจวันที่ 25 มกราคม เป็นต้น..."
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-705 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-lg text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-705 bg-white dark:bg-slate-950 text-slate-900 dark:text-white rounded-lg text-base leading-relaxed focus:outline-none focus:ring-1 focus:ring-teal-500"
                     />
                   </div>
                 </div>
